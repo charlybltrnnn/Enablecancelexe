@@ -1,0 +1,66 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local tracked = {}
+
+local function forceKeep(btn)
+if tracked[btn] then return end
+tracked[btn] = true
+
+btn.Visible = true
+
+btn:GetPropertyChangedSignal("Visible"):Connect(function()
+    if not btn.Visible then
+        btn.Visible = true
+    end
+end)
+
+btn:GetPropertyChangedSignal("ImageTransparency"):Connect(function()
+    if btn.ImageTransparency > 0.3 then
+        btn.ImageTransparency = 0
+    end
+end)
+
+end
+
+local function isInteractionButton(obj)
+if not obj:IsA("ImageButton") then return false end
+
+local name = string.lower(obj.Name)
+local parentName = obj.Parent and string.lower(obj.Parent.Name) or ""
+
+if name:find("skull") or name:find("execute") or name:find("carry") or
+   name:find("grab") or name:find("pickup") or name:find("downed") or
+   name:find("interact") or name:find("action") or
+   parentName:find("downed") or parentName:find("interact") or
+   parentName:find("action") then
+    return true
+end
+
+local pos = obj.AbsolutePosition
+if pos.X < 200 and pos.Y > 100 and pos.Y < 500 then
+    return true
+end
+
+return false
+
+end
+
+task.spawn(function()
+while true do
+for _, obj in pairs(playerGui:GetDescendants()) do
+if isInteractionButton(obj) then
+forceKeep(obj)
+end
+end
+task.wait(0.25)
+end
+end)
+
+playerGui.DescendantAdded:Connect(function(obj)
+task.wait(0.05)
+if isInteractionButton(obj) then
+forceKeep(obj)
+end
+end)
